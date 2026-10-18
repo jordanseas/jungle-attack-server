@@ -14,14 +14,37 @@ public class PlayerAnimal extends Animal {
 
     /** También cancela el ataque. */
     public void setRoute(List<Node> path) {
-        // TODO
+        route.clear();
+        if (path != null) {
+            route.addAll(path);
+        }
+        clearTarget();
     }
 
     public Deque<Node> getRoute() { return route; }
 
     /** Avanza hacia el siguiente nodo; si lo alcanza lo saca y sigue con el resto de la distancia. */
     public void advance(double distance) {
-        // TODO
+        if (!isAlive()) {
+            return;
+        }
+        double remaining = distance;
+        while (remaining > 0 && !route.isEmpty()) {
+            Node next = route.peekFirst();
+            double dx = next.x() - x;
+            double dy = next.y() - y;
+            double gap = Math.hypot(dx, dy);
+            if (gap <= remaining) {
+                // Llega al nodo: se posa exactamente en él, lo saca y sigue con lo que sobra.
+                setPosition(next.x(), next.y());
+                route.pollFirst();
+                remaining -= gap;
+            } else {
+                // No alcanza: avanza la fracción que le corresponde en línea recta hacia el nodo.
+                setPosition(x + dx / gap * remaining, y + dy / gap * remaining);
+                remaining = 0;
+            }
+        }
     }
 
     @Override

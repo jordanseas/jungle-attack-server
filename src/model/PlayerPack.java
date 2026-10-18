@@ -25,7 +25,12 @@ public class PlayerPack extends Pack {
 
     /** Si botsKilled % BOTS_PER_BONUS == 0, heal(1) a todos los vivos. */
     public void addBotKill() {
-        // TODO
+        botsKilled++;
+        if (botsKilled % IConstants.BOTS_PER_BONUS == 0) {
+            for (Animal animal : living()) {
+                animal.heal(1);
+            }
+        }
     }
 
     public void setViewedZone(int zoneId) { this.viewedZone = zoneId; }

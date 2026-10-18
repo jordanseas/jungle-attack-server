@@ -15,14 +15,25 @@ public class Pack {
         this.species = species;
     }
 
+    /** Copia con los miembros vivos; modificarla no afecta al pack. */
     public List<Animal> living() {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
+        List<Animal> alive = new ArrayList<>();
+        for (Animal member : members) {
+            if (member.isAlive()) {
+                alive.add(member);
+            }
+        }
+        return alive;
     }
 
     public int countDead() {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
+        int dead = 0;
+        for (Animal member : members) {
+            if (!member.isAlive()) {
+                dead++;
+            }
+        }
+        return dead;
     }
 
     /** living().isEmpty() */
