@@ -1,15 +1,16 @@
 package model;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 public class GameWorld {
     private GameMap map;
     private List<Pack> packs;
-    private Map<Integer, Animal> animals = new HashMap<>();
+    private Map<Integer, Animal> animals = new LinkedHashMap<>(); // conserva el orden de inserción: recorridos predecibles
     private List<CoffeeCup> cups;
     private List<GameEvent> events = new ArrayList<>();
     private MatchResult result;
@@ -20,7 +21,13 @@ public class GameWorld {
         this.packs = packs;
         this.cups = cups;
         this.startTime = startTime;
-        // TODO: llenar el mapa animals con los miembros de cada pack
+        for (Pack pack : packs) {
+            for (Animal animal : pack.getMembers()) {
+                if (animals.put(animal.getId(), animal) != null) {
+                    throw new IllegalArgumentException("Id de animal repetido: " + animal.getId());
+                }
+            }
+        }
     }
 
     public GameMap getMap() { return map; }
@@ -34,24 +41,43 @@ public class GameWorld {
     public Animal getAnimal(int id) { return animals.get(id); }
 
     public List<Animal> livingAnimals() {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
+        List<Animal> alive = new ArrayList<>();
+        for (Animal animal : animals.values()) {
+            if (animal.isAlive()) {
+                alive.add(animal);
+            }
+        }
+        return alive;
     }
 
     public List<PlayerPack> playerPacks() {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
+        List<PlayerPack> players = new ArrayList<>();
+        for (Pack pack : packs) {
+            if (pack instanceof PlayerPack playerPack) {
+                players.add(playerPack);
+            }
+        }
+        return players;
     }
 
     public PlayerPack opponentOf(PlayerPack pack) {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
+        for (PlayerPack other : playerPacks()) {
+            if (other != pack) {
+                return other;
+            }
+        }
+        return null; // no hay rival
     }
 
     /** Zonas con animales vivos del jugador. */
     public Set<Integer> visibleZones(PlayerPack pack) {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
+        Set<Integer> zones = new TreeSet<>();
+        if (pack != null) {
+            for (Animal animal : pack.living()) {
+                zones.add(animal.getZoneId());
+            }
+        }
+        return zones;
     }
 
     public void addEvent(GameEvent e) { events.add(e); }

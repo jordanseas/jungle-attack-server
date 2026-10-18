@@ -1,5 +1,7 @@
 package model;
 
+import constants.IConstants;
+
 public class Flag extends Entity {
     private PlayerPack owner;
 
@@ -12,7 +14,13 @@ public class Flag extends Entity {
 
     /** a vivo, de un jugador distinto al dueño y a ≤ FLAG_RADIUS. */
     public boolean isTouchedBy(Animal a) {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
+        if (a == null || !a.isAlive()) {
+            return false;
+        }
+        Pack pack = a.getPack();
+        if (pack.isBot() || pack == owner) {
+            return false; // solo cuenta un jugador distinto al dueño
+        }
+        return a.isNear(this, IConstants.FLAG_RADIUS);
     }
 }
