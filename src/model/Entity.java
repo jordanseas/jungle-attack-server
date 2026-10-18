@@ -28,13 +28,14 @@ public abstract class Entity {
     }
 
     public double distanceTo(Entity other) {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
+        return Math.hypot(other.x - x, other.y - y);
     }
 
     /** Misma zona y distancia ≤ radio. */
     public boolean isNear(Entity other, double radius) {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
+        if (other == null || getZoneId() != other.getZoneId()) {
+            return false;
+        }
+        return distanceTo(other) <= radius;
     }
 }
