@@ -7,11 +7,12 @@ import com.google.gson.JsonObject;
 public record Message(MessageType type, JsonObject payload) {
 
     private static final Gson GSON = new Gson();
-        public Message {
+
+    public Message {
         if (payload == null) {
             payload = new JsonObject();
         }
-
+    }
 
     /** Convierte cualquier objeto a JsonObject con Gson. */
     public static Message of(MessageType type, Object payload) {
