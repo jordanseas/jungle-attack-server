@@ -8,7 +8,11 @@ public record ViewZoneCommand(PlayerPack pack, int zoneId) implements IGameComma
 
     @Override
     public ErrorCode execute(GameWorld world, long now) {
-        // TODO: si zoneId está en visibleZones(pack) → setViewedZone; si no ZONE_NOT_VISIBLE
-        throw new UnsupportedOperationException("TODO");
+        // Solo se puede mirar una zona donde hay animales vivos del jugador.
+        if (!world.visibleZones(pack).contains(zoneId)) {
+            return ErrorCode.ZONE_NOT_VISIBLE;
+        }
+        pack.setViewedZone(zoneId);
+        return null;
     }
 }

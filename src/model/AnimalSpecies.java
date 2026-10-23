@@ -5,7 +5,15 @@ public enum AnimalSpecies {
 
     /** Texto del JSON → especie. */
     public static AnimalSpecies fromName(String name) {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
+        if (name == null) {
+            return null;
+        }
+        String clean = name.trim();
+        for (AnimalSpecies species : values()) {
+            if (species.name().equalsIgnoreCase(clean)) {
+                return species;
+            }
+        }
+        return null; // no existe esa especie: el handler responde MALFORMED_MESSAGE
     }
 }
