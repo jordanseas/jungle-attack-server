@@ -6,11 +6,18 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import constants.IConstants;
 import logic.GameEngine;
+import logic.WorldFactory;
 import logic.commands.IGameCommand;
 import model.AnimalSpecies;
+import model.GameEvent;
+import model.GameMap;
+import model.GameWorld;
 import model.MatchResult;
+import model.PlayerPack;
 import protocol.ErrorCode;
 
 /** Publisher del Observer. join, selectSpecies y leave son synchronized. */
@@ -36,24 +43,76 @@ public class GameSession {
 
     /** MATCH_FULL, NICKNAME_TAKEN; con 2 jugadores → onOpponentJoined + onSelectionChanged. */
     public synchronized ErrorCode join(Player p) {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
+        if (state != State.WAITING || players.size() >= IConstants.PLAYERS_PER_MATCH) {
+            return ErrorCode.MATCH_FULL;
+        }
+        for (Player other : players) {
+            if (other.getNickname().equalsIgnoreCase(p.getNickname())) {
+                return ErrorCode.NICKNAME_TAKEN;
+            }
+        }
+        players.add(p);
+        addListener(p.getListener());
+        if (players.size() == IConstants.PLAYERS_PER_MATCH) {
+            state = State.SELECTING;
+            for (IGameListener l : listeners) {
+                l.onOpponentJoined(this);
+            }
+            for (IGameListener l : listeners) {
+                l.onSelectionChanged(this);
+            }
+        }
+        return null;
     }
 
     /** WRONG_PHASE, SPECIES_TAKEN; cuando eligen los dos → start(). */
     public synchronized ErrorCode selectSpecies(Player p, AnimalSpecies s) {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
+        if (state != State.SELECTING) {
+            return ErrorCode.WRONG_PHASE;
+        }
+        if (s == opponentOf(p).getSpecies()) {
+            return ErrorCode.SPECIES_TAKEN;
+        }
+        p.setSpecies(s);
+        for (IGameListener l : listeners) {
+            l.onSelectionChanged(this);
+        }
+        if (players.stream().allMatch(pl -> pl.getSpecies() != null)) {
+            start();
+        }
+        return null;
     }
 
     public List<AnimalSpecies> availableSpecies() {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
+        List<AnimalSpecies> available = new ArrayList<>(List.of(AnimalSpecies.values()));
+        for (Player p : players) {
+            available.remove(p.getSpecies());
+        }
+        return available;
     }
 
     /** WorldFactory + onGameStarted + programa tick() cada TICK_MS. */
     private void start() {
-        // TODO
+        long now = System.currentTimeMillis();
+        Player p1 = players.get(0);
+        Player p2 = players.get(1);
+        GameWorld world = new WorldFactory(random).create(new GameMap(),
+                p1.getNickname(), p1.getSpecies(), p2.getNickname(), p2.getSpecies(), now);
+        engine = new GameEngine(world);
+        for (PlayerPack pack : world.playerPacks()) {
+            for (Player p : players) {
+                if (p.getNickname().equals(pack.getNickname())) {
+                    p.setPack(pack);
+                }
+            }
+        }
+        state = State.PLAYING;
+        lastTick = now;
+        for (IGameListener l : listeners) {
+            l.onGameStarted(this);
+        }
+        loop = scheduler.scheduleAtFixedRate(this::tick, IConstants.TICK_MS, IConstants.TICK_MS,
+                TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -62,8 +121,16 @@ public class GameSession {
      * y devuelve null.
      */
     public ErrorCode submit(IGameCommand command, Consumer<ErrorCode> onError) {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
+        if (state != State.PLAYING) {
+            return ErrorCode.WRONG_PHASE;
+        }
+        commands.add(() -> {
+            ErrorCode e = engine.execute(command, System.currentTimeMillis());
+            if (e != null) {
+                onError.accept(e);
+            }
+        });
+        return null;
     }
 
     /**
@@ -71,17 +138,63 @@ public class GameSession {
      * Atrapa RuntimeException para que el scheduler no se detenga.
      */
     public void tick() {
-        // TODO
+        if (state != State.PLAYING) {
+            return;
+        }
+        try {
+            long now = System.currentTimeMillis();
+            long delta = now - lastTick;
+            lastTick = now;
+
+            Runnable command;
+            while ((command = commands.poll()) != null) {
+                command.run();
+            }
+
+            GameWorld world = engine.getWorld();
+            if (!world.isFinished()) {
+                engine.update(now, delta);
+            }
+            List<GameEvent> events = world.takeEvents();
+            for (IGameListener l : listeners) {
+                l.onTick(this, events);
+            }
+            if (world.isFinished()) {
+                finish(world.getResult());
+            }
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+        }
     }
 
     /** En juego: encola la victoria del rival (OPPONENT_LEFT); antes: cancela y avisa onOpponentLeft. */
     public synchronized void leave(Player p) {
-        // TODO
+        if (state == State.FINISHED) {
+            return;
+        }
+        if (state == State.PLAYING) {
+            Player opponent = opponentOf(p);
+            commands.add(() -> engine.getWorld().finish(
+                    new MatchResult(opponent.getNickname(), MatchResult.Reason.OPPONENT_LEFT)));
+            return;
+        }
+        state = State.FINISHED;
+        players.remove(p);
+        removeListener(p.getListener());
+        for (IGameListener l : listeners) {
+            l.onOpponentLeft(this);
+        }
     }
 
     /** Cancela el loop + onGameOver. */
     private void finish(MatchResult r) {
-        // TODO
+        state = State.FINISHED;
+        if (loop != null) {
+            loop.cancel(false);
+        }
+        for (IGameListener l : listeners) {
+            l.onGameOver(this, r);
+        }
     }
 
     public void addListener(IGameListener l) { listeners.add(l); }
@@ -89,8 +202,12 @@ public class GameSession {
     public void removeListener(IGameListener l) { listeners.remove(l); }
 
     public Player opponentOf(Player p) {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
+        for (Player other : players) {
+            if (other != p) {
+                return other;
+            }
+        }
+        return null;
     }
 
     public GameEngine getEngine() { return engine; }
