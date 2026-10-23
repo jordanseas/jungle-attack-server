@@ -29,7 +29,12 @@ public class GameEngine {
 
     /** Recorre systems; se detiene si world.isFinished(). */
     public void update(long now, long deltaMs) {
-        // TODO
+        for (ITickSystem system : systems) {
+            if (world.isFinished()) {
+                break; // alguien ya ganó: las fases que faltan no se ejecutan
+            }
+            system.update(world, now, deltaMs);
+        }
     }
 
     public GameWorld getWorld() { return world; }
