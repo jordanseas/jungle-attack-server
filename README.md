@@ -5,6 +5,23 @@
 * Andy Quiros Salazar
 * Jordan Seas Alvarez
 
+## Compilar y ejecutar
+
+Requiere JDK 17 o superior. Desde la raíz del proyecto:
+
+```sh
+# compilar (Windows usa ; como separador; Linux/macOS usa :)
+javac -d bin -cp lib/gson-2.11.0.jar src/*/*.java src/*/*/*.java
+
+# ejecutar en el puerto por defecto (config.properties → 5050)
+java -cp "bin;lib/*" app.ServerApp
+
+# o con un puerto explícito
+java -cp "bin;lib/*" app.ServerApp 6000
+```
+
+El puerto se resuelve en este orden: argumento → `server.port` de `config.properties` → `SERVER_PORT` (5050).
+
 # Specs
 
 ### Vista general de paquetes

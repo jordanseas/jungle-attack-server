@@ -169,7 +169,7 @@ public class GameMap {
 
     /** Las coordenadas son múltiplos enteros de NODE_SPACING, así que (x, y) cabe en un long. */
     private static long key(double x, double y) {
-        return ((long) Math.round(x) << 32) ^ (Math.round(y) & 0xFFFFFFFFL);
+        return (Math.round(x) << 32) ^ (Math.round(y) & 0xFFFFFFFFL);
     }
 
     private static int clamp(int value, int max) {

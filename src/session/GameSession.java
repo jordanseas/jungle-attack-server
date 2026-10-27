@@ -26,10 +26,11 @@ public class GameSession {
     public enum State { WAITING, SELECTING, PLAYING, FINISHED }
 
     private String code;
-    private State state = State.WAITING;
+    // volatile: los escribe el hilo del tick o de un cliente y los lee submit() desde otro cliente
+    private volatile State state = State.WAITING;
     private List<Player> players = new ArrayList<>();
     private List<IGameListener> listeners = new ArrayList<>();
-    private GameEngine engine;
+    private volatile GameEngine engine;
     private ConcurrentLinkedQueue<Runnable> commands = new ConcurrentLinkedQueue<>();
     private ScheduledExecutorService scheduler;
     private ScheduledFuture<?> loop;

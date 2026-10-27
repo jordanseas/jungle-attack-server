@@ -10,6 +10,7 @@ public abstract class Animal extends Entity {
     private int targetId = IConstants.NO_TARGET; // objetivo actual o NO_TARGET
     private long lastAttack; // para el cooldown
 
+    @SuppressWarnings("this-escape") // getMaxEnergy() de las subclases solo devuelve una constante
     public Animal(int id, double x, double y, Pack pack) {
         super(id, x, y);
         this.pack = pack;
