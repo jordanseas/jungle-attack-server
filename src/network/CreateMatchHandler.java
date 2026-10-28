@@ -24,8 +24,14 @@ public class CreateMatchHandler implements IMessageHandler {
             return;
         }
         Player player = new Player(nickname, client);
-        GameSession session = MatchManager.getInstance().createMatch(player);
-        client.join(player, session);
-        client.send(Message.of(MessageType.MATCH_CREATED, Map.of("code", session.getCode())));
+        // Un rival puede unirse apenas la partida entra al mapa, antes de que createMatch regrese.
+        // Por eso el player se guarda antes (onOpponentJoined lo necesita) y se toma el mismo lock
+        // que usa send(): así el MATCH_JOINED del rival espera a que salga el MATCH_CREATED.
+        synchronized (client) {
+            client.join(player, null);
+            GameSession session = MatchManager.getInstance().createMatch(player);
+            client.join(player, session);
+            client.send(Message.of(MessageType.MATCH_CREATED, Map.of("code", session.getCode())));
+        }
     }
 }

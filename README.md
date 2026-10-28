@@ -10,8 +10,8 @@
 Requiere JDK 17 o superior. Desde la raíz del proyecto:
 
 ```sh
-# compilar (Windows usa ; como separador; Linux/macOS usa :)
-javac -d bin -cp lib/gson-2.11.0.jar src/*/*.java src/*/*/*.java
+# compilar 
+javac -d bin -cp lib/gson-2.11.0.jar (Get-ChildItem -Recurse src -Filter *.java).FullName
 
 # ejecutar en el puerto por defecto (config.properties → 5050)
 java -cp "bin;lib/*" app.ServerApp
