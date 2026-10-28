@@ -14,7 +14,6 @@ Requiere JDK 17 o superior. Desde la raíz del proyecto:
 javac -d bin -cp lib/gson-2.11.0.jar (Get-ChildItem -Recurse src -Filter *.java).FullName
 
 # ejecutar en el puerto por defecto (config.properties → 5050)
-java -cp "bin;lib/*" app.ServerApp
 
 # o con un puerto explícito
 java -cp "bin;lib/*" app.ServerApp 6000

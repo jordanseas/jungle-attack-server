@@ -2,6 +2,7 @@ package model;
 
 import constants.IConstants;
 
+import java.awt.geom.Line2D;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -21,17 +22,23 @@ public class GameMap {
 
     /**
      * Genera la cuadrícula de caminos: un nodo cada NODE_SPACING (las intersecciones se reutilizan).
-     * Cada zona tiene una cruz: un camino horizontal y uno vertical que pasan por su centro y
-     * continúan en las zonas vecinas, así que todo el mapa queda conectado.
+     * Cada zona tiene un camino horizontal y uno vertical que pasan por su centro y continúan en las
+     * zonas vecinas, así que todo el mapa queda conectado. Igual que en las imágenes del cliente
+     * (jungla_*.svg), los caminos terminan en el centro de las zonas del borde: no hay tramos
+     * que lleven al borde del mapa.
      */
     public GameMap() {
         double step = IConstants.NODE_SPACING;
+        double firstX = IConstants.ZONE_WIDTH / 2.0;
+        double lastX = MAP_WIDTH - IConstants.ZONE_WIDTH / 2.0;
+        double firstY = IConstants.ZONE_HEIGHT / 2.0;
+        double lastY = MAP_HEIGHT - IConstants.ZONE_HEIGHT / 2.0;
 
         // Caminos horizontales: uno por fila de zonas, a la altura del centro de la zona.
         for (int row = 0; row < IConstants.MAP_ROWS; row++) {
             double y = row * IConstants.ZONE_HEIGHT + IConstants.ZONE_HEIGHT / 2.0;
             Node previous = null;
-            for (double x = 0; x <= MAP_WIDTH; x += step) {
+            for (double x = firstX; x <= lastX; x += step) {
                 Node current = nodeFor(x, y);
                 link(previous, current);
                 previous = current;
@@ -42,7 +49,7 @@ public class GameMap {
         for (int col = 0; col < IConstants.MAP_COLUMNS; col++) {
             double x = col * IConstants.ZONE_WIDTH + IConstants.ZONE_WIDTH / 2.0;
             Node previous = null;
-            for (double y = 0; y <= MAP_HEIGHT; y += step) {
+            for (double y = firstY; y <= lastY; y += step) {
                 Node current = nodeFor(x, y); // en las intersecciones devuelve el nodo ya creado
                 link(previous, current);
                 previous = current;
@@ -92,6 +99,19 @@ public class GameMap {
             if (d < bestDistance) {
                 bestDistance = d;
                 best = node;
+            }
+        }
+        return best;
+    }
+
+    /** Distancia de un punto global al tramo de camino más cercano (no al nodo más cercano). */
+    public double distanceToPath(double x, double y) {
+        double best = Double.MAX_VALUE;
+        for (Node a : nodes) {
+            for (Node b : neighbors.get(a.id())) {
+                if (a.id() < b.id()) {
+                    best = Math.min(best, Line2D.ptSegDist(a.x(), a.y(), b.x(), b.y(), x, y));
+                }
             }
         }
         return best;

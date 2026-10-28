@@ -29,7 +29,12 @@ public interface IConstants {
     double ENCOUNTER_RADIUS = 40;
     double CUP_RADIUS = 20;
     double FLAG_RADIUS = 25;
-    double PATH_SNAP_TOLERANCE = 25; // qué tan lejos de un nodo puede caer un clic
+    // qué tan lejos de la recta del camino puede caer un clic: el camino de las imágenes del cliente mide 56
+    // de ancho y además se curva (hasta ~17) y la glorieta del centro está corrida, así que un clic válido
+    // puede quedar hasta ~55 de la recta
+    double PATH_SNAP_TOLERANCE = 56;
+    double ZONE_EDGE_MARGIN = 100; // un clic a menos de esto del borde manda al animal a la zona vecina
+    double ZONE_CROSS_DEPTH = 100; // cuánto se mete en la zona vecina al cruzar (múltiplo de NODE_SPACING)
     double BOT_SPREAD = 10; // separación visual de los bots alrededor de su nodo
     double ANIMAL_SPEED = 80; // unidades por segundo
     long TICK_MS = 100;
