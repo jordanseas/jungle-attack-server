@@ -56,6 +56,7 @@ public class MatchManager implements IGameListener {
         } while (sessions.putIfAbsent(session.getCode(), session) != null);
         session.addListener(this);
         session.join(creator);
+        System.out.println("[partida] creada con el código " + session.getCode());
         return session;
     }
 
@@ -63,9 +64,13 @@ public class MatchManager implements IGameListener {
     public ErrorCode joinMatch(String code, Player p) {
         GameSession session = sessions.get(code);
         if (session == null) {
+            System.out.println("[partida] alguien intentó unirse al código " + code
+                    + ", pero no existe. Partidas activas: " + sessions.keySet());
             return ErrorCode.MATCH_NOT_FOUND;
         }
-        return session.join(p);
+        ErrorCode result = session.join(p);
+        System.out.println("[partida] unirse al código " + code + ": " + (result == null ? "correcto" : result));
+        return result;
     }
 
     /** Elimina la partida del mapa. */

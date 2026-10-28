@@ -47,6 +47,7 @@ public class ServerApp {
             System.out.println("Jungle Attack escuchando en el puerto " + port);
             while (true) {
                 Socket socket = server.accept();
+                System.out.println("[conexión] cliente conectado desde " + socket.getRemoteSocketAddress());
                 try {
                     BufferedReader in = new BufferedReader(
                             new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
